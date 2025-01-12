@@ -9,9 +9,11 @@ export async function getServerSideProps(context) {
   return { props: { params: params, query: query } };
 }
 export default function IndexPage(context: any) {
+  console.log(context);
   const [isAddLoading, setIsAddLoading] = useState(false);
   const [isQueryFriendLoading, setIsQueryFriendLoading] = useState(false);
-  const [cardKey, setCardKey] = useState(context.params.slug);
+  const [cardKey, setCardKey] = useState(context.params.slug[0]);
+  const [pincode, setPincode] = useState(context.params.slug[1]);
   const queryFriend = () => {
     setIsQueryFriendLoading(true);
   };
@@ -34,12 +36,18 @@ export default function IndexPage(context: any) {
           </div>
         </div> */}
         <Input
-          isClearable
           isReadOnly
           className="max-w-xs"
           defaultValue=""
           label="key(不可修改)"
           value={cardKey}
+        />
+        <Input
+          isReadOnly
+          className="max-w-xs"
+          defaultValue=""
+          label="卡密(不可修改)"
+          value={pincode}
         />
         <Input
           isClearable
