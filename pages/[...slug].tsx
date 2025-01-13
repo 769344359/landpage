@@ -1,6 +1,8 @@
 import { Input } from "@nextui-org/input";
 import { Button } from "@nextui-org/button";
 import { useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import { Image } from "@nextui-org/image";
 
 import DefaultLayout from "@/layouts/default";
 export async function getServerSideProps(context) {
@@ -12,13 +14,71 @@ export default function IndexPage(context: any) {
   console.log(context);
   const [isAddLoading, setIsAddLoading] = useState(false);
   const [isQueryFriendLoading, setIsQueryFriendLoading] = useState(false);
-  const [cardKey, setCardKey] = useState(context.params.slug[0]);
+  const [cardKey, setCardKey] = useState<string>(context.params.slug[0]);
   const [pincode, setPincode] = useState(context.params.slug[1]);
+  const [uid, setUid] = useState("");
+  const [image, setImage] = useState("");
   const queryFriend = () => {
-    setIsQueryFriendLoading(true);
+    var myHeaders = new Headers();
+    var formdata = new FormData();
+
+    formdata.append("goodsId", parseInt(cardKey) + "");
+    formdata.append("carmi", pincode);
+
+    var requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: formdata,
+    };
+
+    fetch("https://card.papapis.com/getPath", requestOptions)
+      .then((response) => response.text())
+      .then((result) => {
+        setIsQueryFriendLoading(false);
+        console.log(result);
+        ////
+        let respJson = JSON.parse(result);
+
+        if (respJson.status == 0 && respJson.info.length > 0) {
+          console.log("set image");
+          setImage(respJson.image);
+        }
+        /////
+      })
+      .catch((error) => console.log("error", error));
   };
   const addFriend = () => {
     setIsAddLoading(true);
+
+    var myHeaders = new Headers();
+
+    var formdata = new FormData();
+
+    formdata.append("goodsId", parseInt(cardKey) + "");
+    formdata.append("carmi", pincode);
+    formdata.append("uid", uid + "");
+    var requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: formdata,
+    };
+
+    fetch("https://card.papapis.com/submit", requestOptions)
+      .then((response) => response.text())
+      .then((result) => {
+        let obj = JSON.parse(result);
+
+        setIsAddLoading(false);
+        if (obj.status == 0) {
+          toast.success(obj.info);
+        } else {
+          toast.error(obj.info);
+        }
+      })
+      .catch((error) => {
+        console.log("error", error);
+        toast("请求失败");
+      });
   };
 
   return (
@@ -52,10 +112,11 @@ export default function IndexPage(context: any) {
         <Input
           isClearable
           isRequired
-          className=" max-w-xs"
-          defaultValue=""
+          className="max-w-xs"
           label="宝可梦ID"
-          type="number"
+          value={uid}
+          onValueChange={setUid}
+	  type="text"
         />
         <Button color="primary" isLoading={isAddLoading} onPress={addFriend}>
           提交添加好友
@@ -68,8 +129,14 @@ export default function IndexPage(context: any) {
         >
           查询添加好友截图
         </Button>
+        <Toaster />
+        <Image
+          alt="NextUI hero Image"
+          fallbackSrc={image}
+          src={image}
+          width={300}
+        />
       </section>
     </DefaultLayout>
   );
 }
-
